@@ -10,19 +10,14 @@
 
 #include <cub/util_allocator.cuh>
 #include <cub/device/device_radix_sort.cuh>
+#include <cub/device/device_reduce.cuh>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <algorithm>
-#include <utility>
-#include <iostream>
 #include <bitset>
 #include <math.h>
-#include <time.h>
-#include <chrono>
 #include <cuda.h>
 #include <iostream>
-#include <chrono>
 
 typedef unsigned int uint;
 
@@ -66,13 +61,40 @@ int main(void) {
 		h_value[i] = i;
 	}
 
+	/*
+	 * maximum element of the array.
+	 */
 	uint maxValue = 0;
 	for (i = 0; i < num_of_elements; i++) {
 		if(maxValue < h_vec[i])
 			maxValue = h_vec[i];
 	}
 
-	uint mostSignificantBit = (uint)log2((double)maxValue) + 1;
+	printf("max_val V1=%d", maxValue);
+
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	uint *d_value, *d_value_out, *d_vec, *d_vec_out, *d_max;
+
+	cudaTest(cudaMalloc((void **) &d_vec, mem_size_vec));
+	cudaTest(cudaMalloc((void **) &d_max, sizeof(uint)));
+
+	void *d_temp_storage = NULL;
+	size_t temp_storage_bytes = 0;
+	cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes, d_vec, d_max, num_of_elements);
+	// Allocate temporary storage
+	cudaMalloc(&d_temp_storage, temp_storage_bytes);
+	// Run max-reduction
+	cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes, d_vec, d_max, num_of_elements);
+
+	int* max_val;
+	*max_val = 0;
+	cudaMemcpy(max_val, d_max, (int)sizeof(uint), cudaMemcpyDeviceToHost);
+	printf("max_val V2=%d", max_val);
+
+	/*uint mostSignificantBit = (uint)log2((double)max_val) + 1;
 
 	for (i = 0; i < num_of_segments; i++) {
 		for (uint j = h_seg[i]; j < h_seg[i + 1]; j++) {
@@ -81,11 +103,6 @@ int main(void) {
 		}
 	}
 
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	uint *d_value, *d_value_out, *d_vec, *d_vec_out;
 	void *d_temp = NULL;
 	size_t temp_bytes = 0;
 
@@ -133,13 +150,15 @@ int main(void) {
 			uint segIndex = i << mostSignificantBit;
 			h_vec[j] -= segIndex;
 		}
-	}
+	}*/
 
+	cudaFree(d_temp_storage);
+	cudaFree(d_max);
 	cudaFree(d_vec);
-	cudaFree(d_vec_out);
+	/*cudaFree(d_vec_out);
 	cudaFree(d_value);
 	cudaFree(d_value_out);
-	cudaFree(d_temp);
+	cudaFree(d_temp);*/
 
 	if (ELAPSED_TIME != 1) {
 		print(h_vec, num_of_elements);
