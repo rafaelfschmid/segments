@@ -1,11 +1,11 @@
 #!/bin/bash
 dir=$1 # output files dir
 c=32768
-while [ $c -le 134217728 ]
+while [ $c -le 67108864 ]
 do
 	#echo $c 
 	d=1
-	while [[ $d -lt $c && $d -le 1048576 ]]
+	while [[ $d -lt $c && $d -le 128 ]]
 	do
 		((x=$c/$d))
 		./equal.exe $d $x > $dir/$d"_"$c.in
