@@ -92,7 +92,7 @@ int main(void) {
 	int* max_val;
 	*max_val = 0;
 	cudaMemcpy(max_val, d_max, (int)sizeof(uint), cudaMemcpyDeviceToHost);
-	printf("max_val V2=%d", max_val);
+	printf("max_val V2=%d", *max_val);
 
 	/*uint mostSignificantBit = (uint)log2((double)max_val) + 1;
 
