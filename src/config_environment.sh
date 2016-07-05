@@ -5,6 +5,6 @@ PATH=${CUDA_HOME}/bin:${PATH}
 
 export TIME=1
 export BITS=5
-export EXECS=1
+export EXECS=10
 export SEGS=1048576
 #export SEGS=128

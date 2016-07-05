@@ -10,19 +10,7 @@
  */
 
 #include <moderngpu/kernel_mergesort.hxx>
-#include <stdio.h>
-#include <stdlib.h>
-#include <algorithm>
-#include <utility>
 #include <iostream>
-#include <bitset>
-#include <math.h>
-#include <time.h>
-#include <chrono>
-#include <cuda.h>
-//#include <cstdlib>
-#include <iostream>
-#include <chrono>
 
 #ifndef ELAPSED_TIME
 #define ELAPSED_TIME 0
@@ -130,9 +118,7 @@ int main(int argc, char **argv) {
 	cudaFree(d_vec);
 
 	if (ELAPSED_TIME != 1) {
-//		print(h_vec, num_of_elements);
-		print(h_vec, 30);
-
+		print(h_vec, num_of_elements);
 	}
 
 	free(h_seg);

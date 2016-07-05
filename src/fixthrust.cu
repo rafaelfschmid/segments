@@ -10,14 +10,10 @@
 
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
-#include <thrust/generate.h>
 #include <thrust/sort.h>
 #include <thrust/copy.h>
 #include <thrust/extrema.h>
 #include <thrust/transform.h>
-#include <thrust/functional.h>
-
-#include <chrono>
 #include <iostream>
 
 #ifndef ELAPSED_TIME
@@ -116,7 +112,12 @@ int main(void) {
 			std::cout << millisecondsPre + millisecondsPos << "\n";
 		}
 
-		cudaDeviceSynchronize();
+		cudaError_t errSync = cudaGetLastError();
+		cudaError_t errAsync = cudaDeviceSynchronize();
+		if (errSync != cudaSuccess)
+			printf("4: Sync kernel error: %s\n", cudaGetErrorString(errSync));
+		if (errAsync != cudaSuccess)
+			printf("4: Async kernel error: %s\n", cudaGetErrorString(errAsync));
 	}
 
 	thrust::copy(d_vec.begin(), d_vec.end(), h_vec.begin());
