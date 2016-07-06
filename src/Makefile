@@ -5,8 +5,7 @@
 #SEGS=1048576
 #SEGS=32768
 
-all: cpu mergeseg radixseg fixcub fixpass fixpassdiff fixthrust fixmergemgpu fixbitonic fixmerge fixoddeven fixquick bitonicseg 
-#bitonicsort mergesort oddevensort quicksort
+all: cpu fixcub fixthrust bitonicseg
 
 generate: gen_equal.cpp gen_diff.cpp
 	g++ -O3 gen_equal.cpp -o equal.exe -DEXP_BITS_SIZE=$(BITS) -DRAND
