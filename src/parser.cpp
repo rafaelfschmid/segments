@@ -19,7 +19,9 @@ int main(int argc, char **argv) {
 
 	string line;
 	if (input.is_open()) {
+		int k = 0;
 		while (getline(input, line)) {
+			//cout << k++ << "\n";
 			std::vector<std::vector<double> > multiple_times;
 			int seg = stoi(line);
 			//cout << seg << "\n";
@@ -53,6 +55,7 @@ int main(int argc, char **argv) {
 				seg = stoi(line);
 				getline(input, line);
 			}
+			//cout << "\n";
 			matrix.push_back(multiple_times);
 		}
 		input.close();

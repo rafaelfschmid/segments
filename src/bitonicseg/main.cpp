@@ -28,8 +28,9 @@
 #include "sortingNetworks_common.h"
 
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+#include <math.h>
 
 #ifndef ELAPSED_TIME
 #define ELAPSED_TIME 0
@@ -37,6 +38,10 @@
 
 #ifndef EXECUTIONS
 #define EXECUTIONS 10
+#endif
+
+#ifndef MAX_INT
+#define MAX_INT 4294967295
 #endif
 
 void cudaTest(cudaError_t error) {
@@ -62,7 +67,7 @@ int main(int argc, char** argv) {
 	uint i;
 
 	scanf("%d", &num_of_segments);
-	uint mem_size_seg = sizeof(int) * (num_of_segments + 1);
+	uint mem_size_seg = sizeof(uint) * (num_of_segments + 1);
 	uint *h_seg = (uint *) malloc(mem_size_seg);
 	uint diffprev, diffcur;
 	for (i = 0; i < num_of_segments + 1; i++) {
@@ -77,17 +82,39 @@ int main(int argc, char** argv) {
 				exit(1);
 			}
 		}
-
 	}
 
 	scanf("%d", &num_of_elements);
-	uint mem_size_vec = sizeof(int) * num_of_elements;
-	uint *h_vec = (uint *) malloc(mem_size_vec);
-	uint *h_value = (uint *) malloc(mem_size_vec);
+	uint mem_size_vec = sizeof(uint) * num_of_elements;
+	uint *h_vec_aux = (uint *) malloc(mem_size_vec);
 	for (i = 0; i < num_of_elements; i++) {
-		scanf("%d", &h_vec[i]);
-		h_value[i] = i;
+		scanf("%d", &h_vec_aux[i]);
 	}
+
+
+	uint padding = pow(2,(uint)log2((double)(diffcur-1)) + 1);
+	//padding = pow(2, pad);
+	//std::cout << "padding=" << padding << "\n";
+	uint num_of_elements_new = padding * num_of_segments;
+	uint mem_size_vec_padding = sizeof(uint) * num_of_elements_new;
+	uint *h_vec = (uint *) malloc(mem_size_vec_padding);
+	uint *h_value = (uint *) malloc(mem_size_vec_padding);
+	//std::cout << "diff=" << diffcur << "\n";
+
+	int k = 0;
+	for (uint i = 0; i < num_of_segments; i++) {
+		for (uint j = h_seg[i]; j < h_seg[i + 1]; j++) {
+			h_vec[k] = h_vec_aux[j];
+			h_value[k] = k++;
+		}
+		for (uint j = h_seg[i + 1]; j < (h_seg[i] + padding); j++) {
+			h_vec[k] = MAX_INT;
+			h_value[k] = k++;
+		}
+	}
+
+	//print(h_vec_aux, num_of_elements);
+	//print(h_vec, num_of_elements_new);
 
 	cudaEvent_t start, stop;
 	cudaEventCreate(&start);
@@ -95,45 +122,56 @@ int main(int argc, char** argv) {
 
 	uint *d_value, *d_value_out, *d_vec, *d_vec_out;
 
-	cudaTest(cudaMalloc((void **) &d_vec, mem_size_vec));
-	cudaTest(cudaMalloc((void **) &d_value, mem_size_vec));
-	cudaTest(cudaMalloc((void **) &d_vec_out, mem_size_vec));
-	cudaTest(cudaMalloc((void **) &d_value_out, mem_size_vec));
+	cudaTest(cudaMalloc((void **) &d_vec, mem_size_vec_padding));
+	cudaTest(cudaMalloc((void **) &d_value, mem_size_vec_padding));
+	cudaTest(cudaMalloc((void **) &d_vec_out, mem_size_vec_padding));
+	cudaTest(cudaMalloc((void **) &d_value_out, mem_size_vec_padding));
 
 	for (int i = 0; i < EXECUTIONS; i++) {
-	cudaTest(cudaMemcpy(d_vec, h_vec, mem_size_vec, cudaMemcpyHostToDevice));
-	cudaTest(
-			cudaMemcpy(d_value, h_value, mem_size_vec, cudaMemcpyHostToDevice));
+		cudaTest(cudaMemcpy(d_vec, h_vec, mem_size_vec_padding, cudaMemcpyHostToDevice));
+		cudaTest(cudaMemcpy(d_value, h_value, mem_size_vec_padding, cudaMemcpyHostToDevice));
 
-	cudaEventRecord(start);
-	uint threadCount = 0;
-	threadCount = bitonicSort(d_vec_out, d_value_out, d_vec, d_value,
-			num_of_elements / diffcur, diffcur, 1);
-	cudaEventRecord(stop);
+		cudaEventRecord(start);
+		uint threadCount = 0;
+		threadCount = bitonicSort(d_vec_out, d_value_out, d_vec, d_value,	num_of_elements_new / padding, padding, 1);
+		cudaEventRecord(stop);
 
-	cudaError_t errSync = cudaGetLastError();
-	cudaError_t errAsync = cudaDeviceSynchronize();
-	if (errSync != cudaSuccess)
-		printf("Sync kernel error: %s\n", cudaGetErrorString(errSync));
-	if (errAsync != cudaSuccess)
-		printf("Async kernel error: %s\n", cudaGetErrorString(errAsync));
+		cudaError_t errSync = cudaGetLastError();
+		cudaError_t errAsync = cudaDeviceSynchronize();
+		if (errSync != cudaSuccess)
+			printf("Sync kernel error: %s\n", cudaGetErrorString(errSync));
+		if (errAsync != cudaSuccess)
+			printf("Async kernel error: %s\n", cudaGetErrorString(errAsync));
 
-	if (ELAPSED_TIME == 1) {
-		cudaEventSynchronize(stop);
-		float milliseconds = 0;
-		cudaEventElapsedTime(&milliseconds, start, stop);
-		std::cout << milliseconds << "\n";
+		if (ELAPSED_TIME == 1) {
+			cudaEventSynchronize(stop);
+			float milliseconds = 0;
+			cudaEventElapsedTime(&milliseconds, start, stop);
+			std::cout << milliseconds << "\n";
+		}
 	}
 
+	cudaMemcpy(h_value, d_value_out, mem_size_vec_padding, cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_vec, d_vec_out, mem_size_vec_padding, cudaMemcpyDeviceToHost);
 
+	k = 0;
+	for (uint i = 0; i < num_of_segments; i++) {
+		for (uint j = h_seg[i]; j < h_seg[i + 1]; j++) {
+			h_vec_aux[j] = h_vec[k++];
+		}
+		for (uint j = h_seg[i + 1]; j < (h_seg[i] + padding); j++) {
+			k++;
+		}
 	}
-	cudaMemcpy(h_value, d_value_out, mem_size_vec, cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_vec, d_vec_out, mem_size_vec, cudaMemcpyDeviceToHost);
+
+	//print(h_vec, num_of_elements_new);
+	//print(h_vec_aux, num_of_elements);
 
 	if(ELAPSED_TIME != 1)
-		print(h_vec, num_of_elements);
+		print(h_vec_aux, num_of_elements);
 
 	free(h_vec);
+	free(h_vec_aux);
 	free(h_seg);
 	free(h_value);
 
