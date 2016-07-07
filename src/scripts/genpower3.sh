@@ -3,7 +3,6 @@ dir=$1 # output files dir
 c=32768
 while [ $c -le 134217728 ]
 do
-	#echo $c 
 	d=1
 	while [[ $d -lt $c && $d -le 16384 ]]
 	do
