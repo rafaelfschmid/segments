@@ -4,17 +4,6 @@ dir1=$2 #test files dir
 dir2=$3 #result files dir
 dir3=$4 #errors files dir
 
-#echo "Do you want to remove the files at '"$dir3"'?"
-#read -p "[Yes][No]: " yn
-#if [[ $yn == "Yes" ]]
-#then 
-#	rm $dir3/*
-#	echo "yes"
-#else
-#	echo "no"
-#	exit 0
-#fi
-
 for filename in `ls -tr $dir1`; do
 	file=$filename
 	file=$(echo $file| cut -d'/' -f 3)
@@ -34,3 +23,15 @@ for filename in `ls -tr $dir1`; do
 		echo "Everthing ok."		
 	fi
 done
+
+#echo "Do you want to remove the files at '"$dir3"'?"
+#read -p "[Yes][No]: " yn
+#if [[ $yn == "Yes" ]]
+#then 
+#	rm $dir3/*
+#	echo "yes"
+#else
+#	echo "no"
+#	exit 0
+#fi
+
