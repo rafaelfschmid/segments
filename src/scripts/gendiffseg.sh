@@ -7,9 +7,14 @@ do
 	d=1
 	while [ $d -le  32768 ] 
 	do
-		./diff.exe $d $c > $dir/$d"_"$c.in
+		i=1
+		while [ $i -le  10 ] 
+		do
+			./diff.exe $d $c > $dir/$d"_"$c"_"$i".in"
+			sleep 1
+			((i=$i+1))
+		done
 		((d=$d*2))
-		sleep 1
 	done
 	((c=$c*2))
 done
