@@ -93,13 +93,13 @@ int main(int argc, char** argv) {
 
 
 	uint padding = pow(2,(uint)log2((double)(diffcur-1)) + 1);
-	//padding = pow(2, pad);
-	//std::cout << "padding=" << padding << "\n";
-	uint num_of_elements_new = padding * num_of_segments;
+	uint num_of_segments_new = pow(2,(uint)log2((double)(num_of_segments-1)) + 1);
+	uint num_of_elements_new = padding * num_of_segments_new;
 	uint mem_size_vec_padding = sizeof(uint) * num_of_elements_new;
 	uint *h_vec = (uint *) malloc(mem_size_vec_padding);
 	uint *h_value = (uint *) malloc(mem_size_vec_padding);
-	//std::cout << "diff=" << diffcur << "\n";
+
+	//std::cout << "padding=" << padding << " | num_of_segments_new=" << num_of_segments_new << "\n";
 
 	int k = 0;
 	for (uint i = 0; i < num_of_segments; i++) {
@@ -131,24 +131,27 @@ int main(int argc, char** argv) {
 		cudaTest(cudaMemcpy(d_vec, h_vec, mem_size_vec_padding, cudaMemcpyHostToDevice));
 		cudaTest(cudaMemcpy(d_value, h_value, mem_size_vec_padding, cudaMemcpyHostToDevice));
 
+		//try {
 		cudaEventRecord(start);
 		uint threadCount = 0;
-		threadCount = bitonicSort(d_vec_out, d_value_out, d_vec, d_value,	num_of_elements_new / padding, padding, 1);
+		threadCount = bitonicSort(d_vec_out, d_value_out, d_vec, d_value, num_of_elements_new / padding, padding, 1);
 		cudaEventRecord(stop);
-
+		//} catch (...) {
 		cudaError_t errSync = cudaGetLastError();
 		cudaError_t errAsync = cudaDeviceSynchronize();
 		if (errSync != cudaSuccess)
 			printf("Sync kernel error: %s\n", cudaGetErrorString(errSync));
 		if (errAsync != cudaSuccess)
 			printf("Async kernel error: %s\n", cudaGetErrorString(errAsync));
-
+		//}
 		if (ELAPSED_TIME == 1) {
 			cudaEventSynchronize(stop);
 			float milliseconds = 0;
 			cudaEventElapsedTime(&milliseconds, start, stop);
 			std::cout << milliseconds << "\n";
 		}
+
+		cudaDeviceSynchronize();
 	}
 
 	cudaMemcpy(h_value, d_value_out, mem_size_vec_padding, cudaMemcpyDeviceToHost);

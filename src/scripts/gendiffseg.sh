@@ -5,7 +5,7 @@ while [ $c -le 67108864 ]
 do
 	#echo $c 
 	d=1
-	while [ $d -le  32768 ] 
+	while [[ $d -lt $c && $d -le 1048576 ]] 
 	do
 		i=1
 		while [ $i -le  10 ] 
@@ -15,6 +15,7 @@ do
 			((i=$i+1))
 		done
 		((d=$d*2))
+		sleep 1.0
 	done
 	((c=$c*2))
 done
